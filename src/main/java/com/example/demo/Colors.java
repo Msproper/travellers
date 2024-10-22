@@ -1,11 +1,13 @@
 package com.example.demo;
 
 public enum Colors {
-    RED("red"),
-    GREEN("green"),
-    BLUE("blue"),
-    WHITE("white"),
-    BLACK("black");
+    RED("red;"),
+    GREEN("green;"),
+    BLUE("blue;"),
+    WHITE("white;"),
+    BLACK("black;"),
+    GRAY("#808080;"),
+    GOLD("DAA520;");
 
     private final String description;
 

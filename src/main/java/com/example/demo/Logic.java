@@ -6,15 +6,15 @@ import java.util.*;
 
 class Logic {
 
-    public static boolean bfs(byte[][] matrix, byte[] firstPlayerPos, byte rowWin) {
+    public static boolean bfs(byte[][] matrix, int playerX, int playerY, byte rowWin) {
 
         int rows = matrix.length;
 
         Set<String> visited = new HashSet<>();
         Queue<int[]> queue = new LinkedList<>();
 
-        queue.offer(new int[]{firstPlayerPos[0], firstPlayerPos[1], 0});
-        visited.add(firstPlayerPos[0] + "," + firstPlayerPos[1]);
+        queue.offer(new int[]{playerX, playerY, 0});
+        visited.add(playerX + "," + playerY);
 
         int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 

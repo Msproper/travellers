@@ -108,7 +108,7 @@
   <build>
     <resources>
       <resource>
-        <directory>src/main/resources</directory>
+        <directory>src/main/resources/images1</directory>
       </resource>
     </resources>
     <plugins>
@@ -130,7 +130,7 @@
             <!-- Default configuration for running with: mvn clean javafx:run -->
             <id>default-cli</id>
             <configuration>
-              <mainClass>com.example.demo/com.example.demo.TravellersMain</mainClass>
+              <mainClass>com.example.demo/com.example.demo.MainClass</mainClass>
               <launcher>app</launcher>
               <jlinkZipName>app</jlinkZipName>
               <jlinkImageName>app</jlinkImageName>

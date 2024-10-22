@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import javafx.application.Application;
+import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -8,37 +9,26 @@ import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-public class TravellersMain extends Application {
-    public final static int BOARD_SIZE = 15;
+public class MainClass extends Application {
+    public final static int BOARD_SIZE = 10;
     private Board board;
     private Label status;
+    private MainClass instance;
 
-
+    public Label getStatus() {
+        return status;
+    }
 
     @Override
     public void start(Stage primaryStage) {
-
-        primaryStage.setTitle("Chess");
+        instance = this;
+        primaryStage.setTitle("Travellers");
 
         //main BorderPane
         BorderPane pane = new BorderPane();
-
-        //chess board with column and row markings
-        GridPane table = new GridPane();
-        for (int i = 0; i < BOARD_SIZE; i++) {
-            table.add(newRowLabel(i), 0, i + 1, 1, 1);
-            table.add(newRowLabel(i), BOARD_SIZE+1, i + 1, 1, 1);
-            table.add(newColLabel(i), i + 1, 0, 1, 1);
-            table.add(newColLabel(i), i + 1, BOARD_SIZE+1, 1, 1);
-        }
-
-        table.add(board = new Board(), 1, 1, BOARD_SIZE, BOARD_SIZE);
-
-
-        table.setAlignment(Pos.CENTER);
-        pane.setCenter(table);
 
         GridPane options = new GridPane();
         options.setAlignment(Pos.BOTTOM_RIGHT);
@@ -51,6 +41,10 @@ public class TravellersMain extends Application {
                         "reset.png",
                         e -> {
 
+                            board = new Board(this);
+                            board.setAlignment(Pos.CENTER);
+                            board.setPadding(new Insets(10, 10, 10, 10));
+                            pane.setLeft(board);
                         },
                         "Reset"),
                 0, 0, 1, 1
@@ -66,13 +60,20 @@ public class TravellersMain extends Application {
 
 
         status = new Label();
-        status.setAlignment(Pos.BOTTOM_LEFT);
+        status.setAlignment(Pos.CENTER);
         status.setPadding(new Insets(10, 0, 10, 10));
-        menu.setLeft(status);
+        status.setPrefSize(200, 200);
+        status.setFont(new Font("Cascadia Mono Regular", 20.0));
+        menu.setCenter(status);
 
-        pane.setBottom(menu);
+        pane.setRight(menu);
 
-        Scene scene = new Scene(pane, 880, 680);
+        board = new Board(this);
+        board.setAlignment(Pos.BOTTOM_CENTER);
+        board.setPadding(new Insets(10, 10, 10, 10));
+        pane.setCenter(board);
+
+        Scene scene = new Scene(pane, 1080, 880);
         scene.setOnKeyPressed((KeyEvent)-> {
             if (KeyCode.SPACE == KeyEvent.getCode()){
                 board.switchBuildMode();
@@ -95,6 +96,7 @@ public class TravellersMain extends Application {
     private Label newColLabel(int i) {
         Label l = new Label(BOARD_SIZE-i + "");
         l.setMinSize(25, 10);
+        l.setMaxSize(75, 50);
         l.setAlignment(Pos.CENTER);
         return l;
     }

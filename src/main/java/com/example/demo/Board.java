@@ -1,57 +1,78 @@
 package com.example.demo;
 
+import javafx.scene.control.Alert;
 import javafx.scene.layout.GridPane;
+
 
 public class Board extends GridPane {
 
-    private byte[][] matrix = new byte[15][15];
-
-
-
     private WallBuildMode buildMode = WallBuildMode.LEFT;
-    private final int BOARD_SIZE = 15;
-    private Cell[] cells = new Cell[225];
+    public final static int BOARD_SIZE = MainClass.BOARD_SIZE;
+    private byte[][] matrix = new byte[BOARD_SIZE][BOARD_SIZE];
+    private Cell[] cells = new Cell[BOARD_SIZE*BOARD_SIZE];
     private int currentTurn = 1;
-    private final int FIRST_PLAYER_POS = 7;
-    private final int SECOND_PLAYER_POS = 218;
-    private byte[] posGreen = {7, 0};
-    private byte[] posBlue = {7, 14};
+    private final int FIRST_PLAYER_POS = BOARD_SIZE/2;
+    private final int SECOND_PLAYER_POS = BOARD_SIZE*(BOARD_SIZE-1)+FIRST_PLAYER_POS;
+    private Player bluePlayer;
+    private Player greenPlayer;
+    private boolean choiced = false;
+    private MainClass mainClass;
 
-    public Board(){
-        setStyle("-fx-border-color: black; -fx-background-color: white;");
+    public Board(MainClass mainClass){
+
+        this.mainClass = mainClass;
+
+        setMinSize(BOARD_SIZE*20, BOARD_SIZE*20);
+        setMaxSize(BOARD_SIZE*50, BOARD_SIZE*50);
+        bluePlayer = new Player(BOARD_SIZE/2, BOARD_SIZE-1, this, Colors.BLUE, true, (byte)0);
+        greenPlayer = new Player(BOARD_SIZE/2, 0, this, Colors.GREEN, false, (byte)(BOARD_SIZE-1));
+
+        add(greenPlayer, BOARD_SIZE/2, 0);
+        add(bluePlayer, BOARD_SIZE/2, BOARD_SIZE-1);
+
+        cells[FIRST_PLAYER_POS] = greenPlayer;
+        cells[SECOND_PLAYER_POS] = bluePlayer;
+
         for (int i= 0; i<BOARD_SIZE*BOARD_SIZE; i++){
+
             int x = getX(i);
             int y = getY(i);
-            Cell cell = new Cell(x, y, this);
-            add(cell, x, y);
-            cells[i] = cell;
-            if (i == FIRST_PLAYER_POS) {
-                cell.setGreenPlayer(true);
+            if (i != FIRST_PLAYER_POS && i != SECOND_PLAYER_POS) {
+                Cell cell = new WayCell(x, y, this);
+                add(cell, x, y);
+                cells[i] = cell;
             }
-            if (i == SECOND_PLAYER_POS) {
-                cell.setBluePlayer(true);
-            }
+
 
 
         }
-        createMatrix();
+        setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
+               bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
         setNeighborhoodsForCells();
+
     }
 
-    public byte[] getPosBlue() {
-        return posBlue;
+    public void setStatus(StatusText statusText, Colors color){
+        mainClass.getStatus().setText(statusText.getDescription());
+        mainClass.getStatus().setStyle("-fx-text-fill: "+color.getDescription());
+
+
     }
 
-    public void setPosBlue(byte[] posBlue) {
-        this.posBlue = posBlue;
+    public Player getBluePlayer() {
+        return bluePlayer;
     }
 
-    public byte[] getPosGreen() {
-        return posGreen;
+    public Player getGreenPlayer() {
+        return greenPlayer;
     }
 
-    public void setPosGreen(byte[] posGreen) {
-        this.posGreen = posGreen;
+    public boolean isChoiced() {
+        return choiced;
+    }
+
+    public void setChoiced(boolean choiced) {
+        this.choiced = choiced;
     }
 
     public byte[][] getMatrix() {
@@ -62,27 +83,83 @@ public class Board extends GridPane {
         this.matrix = matrix;
     }
 
-    public void createMatrix(){
-        for (Cell cell: cells){
-            int x = cell.getX();
-            int y = cell.getY();
-            if (cell.isOccupated()) matrix[y][x] = 1;
-            if (cell.isBluePlayer()) matrix[y][x] = 2;
-            if (cell.isGreenPlayer()) matrix[y][x]= 3;
-        }
-    }
 
     public void changeMatrix(int x, int y, byte value){
         matrix[y][x] = value;
     }
 
+    public void checkPossibleWaysForBoth(){
+        greenPlayer.findPossibleWays();
+        bluePlayer.findPossibleWays();
+    }
+
+    public void checkWin(){
+
+        if (bluePlayer.getWinRow() == bluePlayer.getY()){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Победа");
+            alert.setContentText("Синий игрок победил!");
+            alert.showAndWait();
+        }
+        if (greenPlayer.getWinRow() == greenPlayer.getY()){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Победа");
+            alert.setContentText("Зеленый игрок победил!");
+            alert.showAndWait();
+        }
+
+    }
+
+    public Player getPlayerWhoDoTurn(){
+        return (greenPlayer.isMyTurn() ? greenPlayer : bluePlayer);
+    }
+
+    public void move(Cell oldCell){
+        Player currentPlayer = getPlayerWhoDoTurn();
+
+        getChildren().remove(oldCell);
+        getChildren().remove(currentPlayer);
+
+
+        System.out.print(currentPlayer.getX() + "  " + currentPlayer.getY()+"\n");
+        add(currentPlayer, oldCell.getX(), oldCell.getY());
+        add(oldCell, currentPlayer.getX(), currentPlayer.getY());
+
+        int tmpX = oldCell.getX();
+        int tmpY = oldCell.getY();
+
+        oldCell.setCoords(currentPlayer);
+        currentPlayer.setCoords(tmpX, tmpY);
+
+        cells[oldCell.getIndex()] = oldCell;
+        cells[currentPlayer.getIndex()] = currentPlayer;
+
+        switchTurn();
+        checkAllCells();
+        setNeighborhoodsForCells();
+        checkWin();
+    }
+
+    public void checkAllCells(){
+        for (Cell cell : cells){
+            cell.checkStyle(false);
+        }
+    }
+
     public WallBuildMode getBuildMode() {
         return buildMode;
     }
+
+    public void switchTurn(){
+        greenPlayer.setMyTurn(!greenPlayer.isMyTurn());
+        bluePlayer.setMyTurn(!bluePlayer.isMyTurn());
+        setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
+                bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
+
+    }
+
     public void switchBuildMode() {
-        for (Cell cell: cells){
-            cell.cleanBuildMode();
-        }
+        checkAllCells();
 
         buildMode = switch (buildMode){
             case LEFT -> WallBuildMode.UP;
@@ -92,7 +169,8 @@ public class Board extends GridPane {
         };
 
         for (Cell cell: cells){
-            if (cell.isHovered()) cell.checkBuildMode();
+            cell.setCurrentNeighborhood();
+            if (cell.isHovered()) cell.onMouseEntered();
         }
 
 
@@ -101,20 +179,23 @@ public class Board extends GridPane {
     private void setNeighborhoodsForCells(){
         for (int i= 0; i<BOARD_SIZE*BOARD_SIZE; i++){
             Cell[] neighborhoodCells = new Cell[4];
-            if (i - 15 >= 0) neighborhoodCells[0] = cells[i-15];
-            else neighborhoodCells[0] = cells[i+15];
+            if (i - BOARD_SIZE >= 0) neighborhoodCells[0] = cells[i-BOARD_SIZE];
+            else neighborhoodCells[0] = cells[i+BOARD_SIZE];
 
-            if (i+15 <= 224) neighborhoodCells[1] = cells[i+15];
-            else neighborhoodCells[1] = cells[i-15];
+            if (i+BOARD_SIZE <= BOARD_SIZE*BOARD_SIZE-1) neighborhoodCells[1] = cells[i+BOARD_SIZE];
+            else neighborhoodCells[1] = cells[i-BOARD_SIZE];
 
-            if ((i+1) % 15 == 0  && i != 0 ) neighborhoodCells[2] = cells[i-1];
+            if ((i+1) % BOARD_SIZE == 0  && i != 0 ) neighborhoodCells[2] = cells[i-1];
             else neighborhoodCells[2] = cells[i+1];
 
-            if (i % 15 == 0 && i != 224 || i == 0) neighborhoodCells[3] = cells[i+1];
+            if (i % BOARD_SIZE == 0 && i != BOARD_SIZE*BOARD_SIZE-1 || i == 0) neighborhoodCells[3] = cells[i+1];
             else neighborhoodCells[3] = cells[i-1];
 
             cells[i].setNeighborhoodCells(neighborhoodCells);
+            cells[i].setCurrentNeighborhood();
         }
+        bluePlayer.findPossibleWays();
+        greenPlayer.findPossibleWays();
 
     }
 
@@ -126,6 +207,12 @@ public class Board extends GridPane {
             System.out.print("\n");
         }
         System.out.print("\n\n");
+    }
+
+    public void printCells(){
+        for (Cell cell : cells){
+            System.out.print(cell);
+        }
     }
 
     private int getX(int i){
