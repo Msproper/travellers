@@ -1,5 +1,6 @@
-package com.example.demo;
+package com.example.demo.GameModels;
 
+import com.example.demo.Colors;
 import javafx.scene.control.Label;
 
 

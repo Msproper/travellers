@@ -10,7 +10,18 @@ module com.example.demo {
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
+    requires spring.websocket;
+    requires spring.messaging;
+    requires spring.core;
+    requires spring.webflux;
+    requires reactor.core;
+    requires javax.websocket.api;
+    requires org.json;
 
     opens com.example.demo to javafx.fxml;
     exports com.example.demo;
+    exports com.example.demo.GameModels;
+    opens com.example.demo.GameModels to javafx.fxml;
+    exports com.example.demo.Enums;
+    opens com.example.demo.Enums to javafx.fxml;
 }

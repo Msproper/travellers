@@ -1,11 +1,15 @@
 package com.example.demo;
 
-public class WayCell extends Cell{
+import com.example.demo.Enums.StatusText;
+import com.example.demo.GameModels.Board;
+import com.example.demo.GameModels.Cell;
+
+public class WayCell extends Cell {
 
     private boolean wall = false;
 
     public boolean isWall() {
-        return wall;
+        return !wall;
     }
 
     public WayCell(int x, int y, Board board) {
@@ -38,18 +42,22 @@ public class WayCell extends Cell{
 
     @Override
     public void OnMouseClicked() {
+        board.checkWin();
+
         if (isPossibleWay() && board.isChoiced()) {
             board.setChoiced(false);
             board.move(this);
             return;
         }
 
+
         if (!currentNeighbor.getClass().isAssignableFrom(getClass())
                 || board.isChoiced()
                 || wall
                 || ((WayCell) currentNeighbor).wall
-        ) return;
+        ) {board.setStatus(StatusText.WALL_COLLISION, Colors.RED);return;}
 
+        if (board.getPlayerWhoDoTurn().getNumberOfWalls() == 0) {board.setStatus(StatusText.DONT_HAVE_WALLS, Colors.RED); return;}
 
         board.changeMatrix(x, y, (byte)1);
         board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)1);
@@ -57,6 +65,7 @@ public class WayCell extends Cell{
         if ( board.getBluePlayer().checkLogic() && board.getGreenPlayer().checkLogic()){
             wall = true;
             ((WayCell) currentNeighbor).wall = true;
+            board.getPlayerWhoDoTurn().useWall();
 
             board.checkPossibleWaysForBoth();
             board.switchTurn();
@@ -64,6 +73,7 @@ public class WayCell extends Cell{
         else {
             board.changeMatrix(x, y, (byte)0);
             board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)0);
+            board.setStatus(StatusText.NOWAY, Colors.RED);
         }
 
     }

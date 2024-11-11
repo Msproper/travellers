@@ -1,7 +1,12 @@
-package com.example.demo;
+package com.example.demo.GameModels;
 
+import com.example.demo.*;
+import com.example.demo.Enums.StatusText;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.GridPane;
+import javafx.util.Duration;
 
 
 public class Board extends GridPane {
@@ -9,14 +14,12 @@ public class Board extends GridPane {
     private WallBuildMode buildMode = WallBuildMode.LEFT;
     public final static int BOARD_SIZE = MainClass.BOARD_SIZE;
     private byte[][] matrix = new byte[BOARD_SIZE][BOARD_SIZE];
-    private Cell[] cells = new Cell[BOARD_SIZE*BOARD_SIZE];
-    private int currentTurn = 1;
-    private final int FIRST_PLAYER_POS = BOARD_SIZE/2;
-    private final int SECOND_PLAYER_POS = BOARD_SIZE*(BOARD_SIZE-1)+FIRST_PLAYER_POS;
-    private Player bluePlayer;
-    private Player greenPlayer;
+    private final Cell[] cells = new Cell[BOARD_SIZE*BOARD_SIZE];
+    private final Player bluePlayer;
+    private final Player greenPlayer;
     private boolean choiced = false;
-    private MainClass mainClass;
+    private final MainClass mainClass;
+    Timeline timer;
 
     public Board(MainClass mainClass){
 
@@ -30,7 +33,9 @@ public class Board extends GridPane {
         add(greenPlayer, BOARD_SIZE/2, 0);
         add(bluePlayer, BOARD_SIZE/2, BOARD_SIZE-1);
 
+        int FIRST_PLAYER_POS = BOARD_SIZE / 2;
         cells[FIRST_PLAYER_POS] = greenPlayer;
+        int SECOND_PLAYER_POS = BOARD_SIZE * (BOARD_SIZE - 1) + FIRST_PLAYER_POS;
         cells[SECOND_PLAYER_POS] = bluePlayer;
 
         for (int i= 0; i<BOARD_SIZE*BOARD_SIZE; i++){
@@ -49,12 +54,13 @@ public class Board extends GridPane {
         setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
                bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
         setNeighborhoodsForCells();
+        startTimer();
 
     }
 
     public void setStatus(StatusText statusText, Colors color){
         mainClass.getStatus().setText(statusText.getDescription());
-        mainClass.getStatus().setStyle("-fx-text-fill: "+color.getDescription());
+        mainClass.getStatus().setStyle("-fx-text-fill: "+color.getDescription() + "-fx-background-color: #AACC99;");
 
 
     }
@@ -79,10 +85,6 @@ public class Board extends GridPane {
         return matrix;
     }
 
-    public void setMatrix(byte[][] matrix) {
-        this.matrix = matrix;
-    }
-
 
     public void changeMatrix(int x, int y, byte value){
         matrix[y][x] = value;
@@ -94,19 +96,22 @@ public class Board extends GridPane {
     }
 
     public void checkWin(){
+        if (bluePlayer.isWin() || greenPlayer.isLose()){
+            DoWin(Colors.BLUE);
+            return;
+        }
+        if (greenPlayer.isWin() || bluePlayer.isLose()){
+            DoWin(Colors.GREEN);
+        }
 
-        if (bluePlayer.getWinRow() == bluePlayer.getY()){
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Победа");
-            alert.setContentText("Синий игрок победил!");
-            alert.showAndWait();
-        }
-        if (greenPlayer.getWinRow() == greenPlayer.getY()){
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Победа");
-            alert.setContentText("Зеленый игрок победил!");
-            alert.showAndWait();
-        }
+    }
+
+    public void DoWin(Colors color){
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Победа");
+        alert.setContentText((color == Colors.BLUE ? "Синий" : "Зеленый")+" игрок победил!");
+        alert.showAndWait();
+        timer.stop();
 
     }
 
@@ -146,6 +151,25 @@ public class Board extends GridPane {
         }
     }
 
+    private void startTimer(){
+        timer = new Timeline(
+                new KeyFrame(Duration.millis(10), e -> {getPlayerWhoDoTurn().updateTimer(); setTimer();}));
+        timer.setCycleCount(Timeline.INDEFINITE);
+        timer.play();
+    }
+
+    private void setTimer(){
+        int time = getPlayerWhoDoTurn().getTimer();
+        if (time < 0) {
+            return;
+        }
+        int minutes = (time / 6000) ;
+        int seconds = (time / 100)  % 60;
+        int mlsec = time % 100;
+
+        mainClass.getTimer().setText(String.format("%02d:%02d:%02d", minutes, seconds, mlsec));
+    }
+
     public WallBuildMode getBuildMode() {
         return buildMode;
     }
@@ -155,7 +179,7 @@ public class Board extends GridPane {
         bluePlayer.setMyTurn(!bluePlayer.isMyTurn());
         setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
                 bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
-
+        setTimer();
     }
 
     public void switchBuildMode() {
@@ -199,21 +223,7 @@ public class Board extends GridPane {
 
     }
 
-    public void printMatrix(){
-        for (byte[] row: matrix){
-            for (byte value: row){
-                System.out.print(value);
-            }
-            System.out.print("\n");
-        }
-        System.out.print("\n\n");
-    }
 
-    public void printCells(){
-        for (Cell cell : cells){
-            System.out.print(cell);
-        }
-    }
 
     private int getX(int i){
         return i % BOARD_SIZE;

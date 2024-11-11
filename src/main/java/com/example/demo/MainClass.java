@@ -1,29 +1,38 @@
 package com.example.demo;
 
+import com.example.demo.GameModels.Board;
 import javafx.application.Application;
-import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 public class MainClass extends Application {
+
+
+
     public final static int BOARD_SIZE = 10;
     private Board board;
     private Label status;
     private MainClass instance;
+    private Label timer;
 
     public Label getStatus() {
         return status;
     }
 
+    public Label getTimer() {return timer;}
+
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage){
+
+        //WSClient wsClient = new WSClient();
+        //wsClient.firstWSClient();
+
         instance = this;
         primaryStage.setTitle("Travellers");
 
@@ -31,10 +40,8 @@ public class MainClass extends Application {
         BorderPane pane = new BorderPane();
 
         GridPane options = new GridPane();
-        options.setAlignment(Pos.BOTTOM_RIGHT);
+        options.setAlignment(Pos.CENTER);
 
-        BorderPane menu = new BorderPane();
-        menu.setPadding(new Insets(10, 10, 10, 0));
 
 
         options.add(new OptionButton(
@@ -43,37 +50,50 @@ public class MainClass extends Application {
 
                             board = new Board(this);
                             board.setAlignment(Pos.CENTER);
-                            board.setPadding(new Insets(10, 10, 10, 10));
-                            pane.setLeft(board);
+                            board.setPadding(new Insets(10));
+                            pane.setCenter(board);
                         },
                         "Reset"),
-                0, 0, 1, 1
+                0, 0, 2, 2
         );
         options.add(new OptionButton(
                         "save.png",
                         e -> {
                         },
                         "Save"),
-                1, 0, 1, 1
+                2, 0, 2, 2
         );
-        menu.setRight(options);
+
+        createStatus();
+
+        createTimer();
+
+        BorderPane infoBar = createInfoBar();
+
+        infoBar.setCenter(options);
+
+        infoBar.setBottom(timer);
 
 
-        status = new Label();
-        status.setAlignment(Pos.CENTER);
-        status.setPadding(new Insets(10, 0, 10, 10));
-        status.setPrefSize(200, 200);
-        status.setFont(new Font("Cascadia Mono Regular", 20.0));
-        menu.setCenter(status);
+        pane.setRight(infoBar);
 
-        pane.setRight(menu);
 
         board = new Board(this);
         board.setAlignment(Pos.BOTTOM_CENTER);
-        board.setPadding(new Insets(10, 10, 10, 10));
+        board.setPadding(new Insets(10));
         pane.setCenter(board);
 
-        Scene scene = new Scene(pane, 1080, 880);
+
+        BackgroundImage backgroundImage = new BackgroundImage(Helper.loadImage("Background.png",
+                1900,1900),
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                null,
+                null);
+        pane.setBackground(new Background(backgroundImage));
+
+        Scene scene = new Scene(pane, 1580, 880);
+
         scene.setOnKeyPressed((KeyEvent)-> {
             if (KeyCode.SPACE == KeyEvent.getCode()){
                 board.switchBuildMode();
@@ -85,20 +105,29 @@ public class MainClass extends Application {
         primaryStage.setMinHeight(primaryStage.getHeight());
     }
 
-    private Label newRowLabel(int i) {
-        Label l = new Label(BOARD_SIZE - i + "");
-        l.setMinSize(10, 25);
-        l.setMaxSize(50, 75);
-        l.setAlignment(Pos.CENTER);
-        return l;
+    private BorderPane createInfoBar(){
+        BorderPane infoBar = new BorderPane();
+        infoBar.setTop(status);
+        infoBar.setPrefWidth(300);
+        infoBar.setPadding(new Insets(10));
+        infoBar.setStyle("-fx-background-color: white; -fx-border-color:black;");
+        return infoBar;
     }
 
-    private Label newColLabel(int i) {
-        Label l = new Label(BOARD_SIZE-i + "");
-        l.setMinSize(25, 10);
-        l.setMaxSize(75, 50);
-        l.setAlignment(Pos.CENTER);
-        return l;
+    private void createStatus(){
+        status = new Label();
+        status.setAlignment(Pos.CENTER);
+        status.setMinSize(150, 200);
+        status.setMaxSize(350, 350);
+        status.setFont(new Font("Cascadia Mono Regular", 25.0));
+    }
+
+    private void createTimer(){
+        timer = new Label();
+        timer.setText("00:00");
+        timer.setAlignment(Pos.CENTER);
+        timer.setPrefSize(600, 150);
+        timer.setFont(new Font("Cascadia Mono Regular", 25.0));
     }
 
     public static void main(String[] args) {

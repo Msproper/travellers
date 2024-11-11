@@ -14,25 +14,25 @@ class OptionButton extends Label {
     OptionButton(String imageResource, EventHandler<? super MouseEvent> mouseClickedEvent, String tooltip) {
         setAlignment(Pos.CENTER);
         icon = new ImageView(Helper.loadImage(imageResource, 70, 70));
-        resizeIcon(30);
+        resizeIcon(50);
         setGraphic(icon);
         setOnMouseClicked(mouseClickedEvent);
         setOnMouseEntered(this::onMouseEntered);
         setOnMouseExited(this::onMouseExited);
-        setMinHeight(35);
-        setMaxHeight(35);
-        setMinWidth(40);
-        setMaxWidth(40);
+        setMinHeight(70);
+        setMaxHeight(90);
+        setMinWidth(80);
+        setMaxWidth(120);
         setTooltip(new Tooltip(tooltip));
     }
 
     private void onMouseEntered(MouseEvent e) {
-        resizeIcon(35);
+        resizeIcon(70);
         e.consume();
     }
 
     private void onMouseExited(MouseEvent e) {
-        resizeIcon(30);
+        resizeIcon(50);
         e.consume();
     }
 
