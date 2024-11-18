@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Fe">
+   <children>
+      <AnchorPane layoutX="92.0" layoutY="100.0" prefHeight="200.0" prefWidth="200.0">
+         <children>
+            <Label layoutX="60.0" layoutY="73.0" text="Label">
+               <font>
+                  <Font name="Cascadia Mono Regular" size="43.0" />
+               </font></Label>
+         </children>
+      </AnchorPane>
+   </children>
+</AnchorPane>

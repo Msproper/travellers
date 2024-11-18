@@ -1,8 +1,6 @@
 package com.example.demo;
 
 import com.example.demo.GameModels.Game;
-import com.example.demo.Server.NettyClient;
-import com.example.demo.Server.RequestData;
 import com.example.demo.Utilits.Helper;
 import javafx.application.Application;
 import javafx.geometry.Insets;

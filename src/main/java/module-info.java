@@ -33,4 +33,8 @@ module com.example.demo {
     opens com.example.demo.Utilits to javafx.fxml;
     exports com.example.demo.Server;
     opens com.example.demo.Server to javafx.fxml;
+    exports com.example.demo.Client;
+    opens com.example.demo.Client to javafx.fxml;
+    exports com.example.demo.Data;
+    opens com.example.demo.Data to javafx.fxml;
 }
