@@ -8,6 +8,8 @@ import com.example.demo.Client.NettyClient;
 import com.example.demo.Data.RequestData;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.GridPane;
 import javafx.util.Duration;
@@ -21,14 +23,14 @@ import javafx.util.Duration;
  *
  */
 
-public class Game extends GridPane {
+public class Board extends GridPane {
 
     private WallBuildMode buildMode = WallBuildMode.LEFT;
     public final static int BOARD_SIZE = MainClass.BOARD_SIZE;
     private byte[][] matrix = new byte[BOARD_SIZE][BOARD_SIZE];
     private final Cell[] cells = new Cell[BOARD_SIZE*BOARD_SIZE];
-    private final Player bluePlayer;
-    private final Player greenPlayer;
+    private Player bluePlayer;
+    private Player greenPlayer;
     private boolean choiced = false;
     private final MainClass mainClass;
     public NettyClient client;
@@ -36,10 +38,26 @@ public class Game extends GridPane {
 
 
 
-    public Game(MainClass mainClass){
+    public Board(MainClass mainClass){
 
         this.mainClass = mainClass;
+
+        setAlignment(Pos.BOTTOM_CENTER);
+        setPadding(new Insets(10));
         createClient();
+        init();
+
+        setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
+               bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
+
+        startTimer();
+
+
+
+    }
+
+    private void init(){
+        getChildren().removeAll();
 
         setMinSize(BOARD_SIZE*20, BOARD_SIZE*20);
         setMaxSize(BOARD_SIZE*50, BOARD_SIZE*50);
@@ -63,17 +81,15 @@ public class Game extends GridPane {
                 add(cell, x, y);
                 cells[i] = cell;
             }
-
-
-
         }
-        setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
-               bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
         setNeighborhoodsForCells();
+
+    }
+
+    public void reload(){
+        init();
+
         startTimer();
-
-
-
     }
 
     //Создание экземпляра класса клиента для обращения к серверу
@@ -225,6 +241,7 @@ public class Game extends GridPane {
     }
 
     private void startTimer(){
+        if (timer != null) timer.stop();
         timer = new Timeline(
                 new KeyFrame(Duration.millis(10), e -> {getPlayerWhoDoTurn().updateTimer(); setTimer();}));
         timer.setCycleCount(Timeline.INDEFINITE);

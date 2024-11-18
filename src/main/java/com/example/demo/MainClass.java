@@ -1,6 +1,6 @@
 package com.example.demo;
 
-import com.example.demo.GameModels.Game;
+import com.example.demo.GameModels.Board;
 import com.example.demo.Utilits.Helper;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -20,9 +20,8 @@ public class MainClass extends Application {
 
 
     public final static int BOARD_SIZE = 10;
-    private Game game;
+    private Board board;
     private Label status;
-    private MainClass instance;
     private Label timer;
 
 
@@ -37,123 +36,61 @@ public class MainClass extends Application {
     public void start(Stage primaryStage){
 
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Режим игры");
-        alert.setHeaderText(null);
-        alert.setContentText("Выберите режими игры");
+//        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+//        alert.setTitle("Режим игры");
+//        alert.setHeaderText(null);
+//        alert.setContentText("Выберите режими игры");
+//
+//        ButtonType choiceHost = new ButtonType("Host");
+//        ButtonType choiceClient = new ButtonType("Cancel");
+//
+//        alert.getButtonTypes().setAll(choiceClient, choiceHost);
+//
+//        Optional<ButtonType> result = alert.showAndWait();
+//        if (result.get() == choiceClient){
+//            // ... user chose "One"
+//        } else if (result.get() == choiceHost) {
+//            // ... user chose "Two"
+//        } else {
+//            return;
+//        }
 
-        ButtonType choiceHost = new ButtonType("Host");
-        ButtonType choiceClient = new ButtonType("Cancel");
+        status = Designer.createStatus();
+        timer = Designer.createTimer();
 
-        alert.getButtonTypes().setAll(choiceClient, choiceHost);
-
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.get() == choiceClient){
-            // ... user chose "One"
-        } else if (result.get() == choiceHost) {
-            // ... user chose "Two"
-        } else {
-            return;
-        }
+        board = new Board(this);
 
 
-
-        instance = this;
-        primaryStage.setTitle("Travellers");
-
-        //main BorderPane
         BorderPane pane = new BorderPane();
-
-        GridPane options = new GridPane();
-        options.setAlignment(Pos.CENTER);
+        GridPane options = Designer.createOptions(board);
 
 
+        BorderPane infoBar = Designer.createInfoBar(status);
 
-        options.add(new OptionButton(
-                        "reset.png",
-                        e -> {
-
-                            game = new Game(this);
-                            game.setAlignment(Pos.CENTER);
-                            game.setPadding(new Insets(10));
-                            pane.setCenter(game);
-                        },
-                        "Reset"),
-                0, 0, 2, 2
-        );
-        options.add(new OptionButton(
-                        "save.png",
-                        e -> {
-                        },
-                        "Save"),
-                2, 0, 2, 2
-        );
-
-        createStatus();
-
-        createTimer();
-
-        BorderPane infoBar = createInfoBar();
-
+        infoBar.setTop(status);
         infoBar.setCenter(options);
-
         infoBar.setBottom(timer);
 
         pane.setRight(infoBar);
-
-
-        game = new Game(this);
-        game.setAlignment(Pos.BOTTOM_CENTER);
-        game.setPadding(new Insets(10));
-        pane.setCenter(game);
-
-
-        BackgroundImage backgroundImage = new BackgroundImage(Helper.loadImage("Background.png",
-                1900,1900),
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundRepeat.NO_REPEAT,
-                null,
-                null);
-        pane.setBackground(new Background(backgroundImage));
+        pane.setCenter(board);
+        pane.setBackground(Designer.createBackground());
 
         Scene scene = new Scene(pane, 1580, 880);
 
         scene.setOnKeyPressed((KeyEvent)-> {
             if (KeyCode.SPACE == KeyEvent.getCode()){
-                game.switchBuildMode();
+                board.switchBuildMode();
             }
         });
+
+        primaryStage.setTitle("Travellers");
         primaryStage.setScene(scene);
         primaryStage.show();
         primaryStage.setMinWidth(primaryStage.getWidth());
         primaryStage.setMinHeight(primaryStage.getHeight());
-        //client.close();
     }
 
-    private BorderPane createInfoBar(){
-        BorderPane infoBar = new BorderPane();
-        infoBar.setTop(status);
-        infoBar.setPrefWidth(300);
-        infoBar.setPadding(new Insets(10));
-        infoBar.setStyle("-fx-background-color: white; -fx-border-color:black;");
-        return infoBar;
-    }
 
-    private void createStatus(){
-        status = new Label();
-        status.setAlignment(Pos.CENTER);
-        status.setMinSize(150, 200);
-        status.setMaxSize(350, 350);
-        status.setFont(new Font("Cascadia Mono Regular", 25.0));
-    }
-
-    private void createTimer(){
-        timer = new Label();
-        timer.setText("00:00");
-        timer.setAlignment(Pos.CENTER);
-        timer.setPrefSize(600, 150);
-        timer.setFont(new Font("Cascadia Mono Regular", 25.0));
-    }
 
     public static void main(String[] args) {
         launch(args);
