@@ -1,25 +1,33 @@
 package com.example.demo;
 
-import com.example.demo.GameModels.Board;
+import com.example.demo.GameModels.Game;
+import com.example.demo.Server.NettyClient;
+import com.example.demo.Server.RequestData;
+import com.example.demo.Utilits.Helper;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+
+import java.util.Optional;
+
 
 public class MainClass extends Application {
 
 
 
     public final static int BOARD_SIZE = 10;
-    private Board board;
+    private Game game;
     private Label status;
     private MainClass instance;
     private Label timer;
+
+
 
     public Label getStatus() {
         return status;
@@ -30,8 +38,27 @@ public class MainClass extends Application {
     @Override
     public void start(Stage primaryStage){
 
-        //WSClient wsClient = new WSClient();
-        //wsClient.firstWSClient();
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Режим игры");
+        alert.setHeaderText(null);
+        alert.setContentText("Выберите режими игры");
+
+        ButtonType choiceHost = new ButtonType("Host");
+        ButtonType choiceClient = new ButtonType("Cancel");
+
+        alert.getButtonTypes().setAll(choiceClient, choiceHost);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == choiceClient){
+            // ... user chose "One"
+        } else if (result.get() == choiceHost) {
+            // ... user chose "Two"
+        } else {
+            return;
+        }
+
+
 
         instance = this;
         primaryStage.setTitle("Travellers");
@@ -48,10 +75,10 @@ public class MainClass extends Application {
                         "reset.png",
                         e -> {
 
-                            board = new Board(this);
-                            board.setAlignment(Pos.CENTER);
-                            board.setPadding(new Insets(10));
-                            pane.setCenter(board);
+                            game = new Game(this);
+                            game.setAlignment(Pos.CENTER);
+                            game.setPadding(new Insets(10));
+                            pane.setCenter(game);
                         },
                         "Reset"),
                 0, 0, 2, 2
@@ -74,14 +101,13 @@ public class MainClass extends Application {
 
         infoBar.setBottom(timer);
 
-
         pane.setRight(infoBar);
 
 
-        board = new Board(this);
-        board.setAlignment(Pos.BOTTOM_CENTER);
-        board.setPadding(new Insets(10));
-        pane.setCenter(board);
+        game = new Game(this);
+        game.setAlignment(Pos.BOTTOM_CENTER);
+        game.setPadding(new Insets(10));
+        pane.setCenter(game);
 
 
         BackgroundImage backgroundImage = new BackgroundImage(Helper.loadImage("Background.png",
@@ -96,13 +122,14 @@ public class MainClass extends Application {
 
         scene.setOnKeyPressed((KeyEvent)-> {
             if (KeyCode.SPACE == KeyEvent.getCode()){
-                board.switchBuildMode();
+                game.switchBuildMode();
             }
         });
         primaryStage.setScene(scene);
         primaryStage.show();
         primaryStage.setMinWidth(primaryStage.getWidth());
         primaryStage.setMinHeight(primaryStage.getHeight());
+        //client.close();
     }
 
     private BorderPane createInfoBar(){

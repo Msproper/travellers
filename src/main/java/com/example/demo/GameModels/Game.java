@@ -1,7 +1,11 @@
 package com.example.demo.GameModels;
 
 import com.example.demo.*;
+import com.example.demo.Enums.Colors;
 import com.example.demo.Enums.StatusText;
+import com.example.demo.Enums.WallBuildMode;
+import com.example.demo.Server.NettyClient;
+import com.example.demo.Server.RequestData;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.scene.control.Alert;
@@ -9,7 +13,15 @@ import javafx.scene.layout.GridPane;
 import javafx.util.Duration;
 
 
-public class Board extends GridPane {
+/** Это основной класс игровой логики
+ *
+ * Этот класс наследуется от GrioPane,
+ * в нем располагаются игровые секции (Cells),
+ * происходит проверка победы и поражения и т.д.
+ *
+ */
+
+public class Game extends GridPane {
 
     private WallBuildMode buildMode = WallBuildMode.LEFT;
     public final static int BOARD_SIZE = MainClass.BOARD_SIZE;
@@ -19,11 +31,15 @@ public class Board extends GridPane {
     private final Player greenPlayer;
     private boolean choiced = false;
     private final MainClass mainClass;
+    public NettyClient client;
     Timeline timer;
 
-    public Board(MainClass mainClass){
+
+
+    public Game(MainClass mainClass){
 
         this.mainClass = mainClass;
+        createClient();
 
         setMinSize(BOARD_SIZE*20, BOARD_SIZE*20);
         setMaxSize(BOARD_SIZE*50, BOARD_SIZE*50);
@@ -56,15 +72,36 @@ public class Board extends GridPane {
         setNeighborhoodsForCells();
         startTimer();
 
+
+
     }
 
+    //Создание экземпляра класса клиента для обращения к серверу
+    public void createClient(){
+        try {
+            client = new NettyClient("localhost", 8080);
+            client.start();
+            client.sendToServer(new RequestData(123,"Test!"));
+        } catch (Exception exception){
+            exception.printStackTrace();
+        }
+    }
+
+
+    /** Установка статуса
+     *
+     * @param statusText Сам текст из перечисления StatusText
+     * @param color Цвет самого уведомления
+     *
+     */
     public void setStatus(StatusText statusText, Colors color){
         mainClass.getStatus().setText(statusText.getDescription());
         mainClass.getStatus().setStyle("-fx-text-fill: "+color.getDescription() + "-fx-background-color: #AACC99;");
 
-
     }
 
+
+    /** Геттеры и сеттеры */
     public Player getBluePlayer() {
         return bluePlayer;
     }
@@ -85,16 +122,34 @@ public class Board extends GridPane {
         return matrix;
     }
 
+    public WallBuildMode getBuildMode() {
+        return buildMode;
+    }
+
+    /**Конец геттеров и сеттеров*/
+
+
+
+    /** Изменение матрицы
+     *
+     * @param x - Х-координата
+     * @param y - У-координата
+     * @param value - Значение, на которое меняем
+     */
 
     public void changeMatrix(int x, int y, byte value){
         matrix[y][x] = value;
     }
 
+
+    /**Проверка возможных ходов для обоих игроков*/
     public void checkPossibleWaysForBoth(){
         greenPlayer.findPossibleWays();
         bluePlayer.findPossibleWays();
     }
 
+
+    /** Проверка победы / поражения */
     public void checkWin(){
         if (bluePlayer.isWin() || greenPlayer.isLose()){
             DoWin(Colors.BLUE);
@@ -106,37 +161,53 @@ public class Board extends GridPane {
 
     }
 
+
+    public void sendMessage(){
+        if (client != null){
+            //todo
+        }
+    }
+
+    /** Объявление победы
+     *
+     * @param color - цвет игрока победителя
+     */
     public void DoWin(Colors color){
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Победа");
         alert.setContentText((color == Colors.BLUE ? "Синий" : "Зеленый")+" игрок победил!");
         alert.showAndWait();
         timer.stop();
-
+        setDisable(true);
     }
 
     public Player getPlayerWhoDoTurn(){
         return (greenPlayer.isMyTurn() ? greenPlayer : bluePlayer);
     }
 
-    public void move(Cell oldCell){
+
+    /** Произведение хода игрока
+     *
+     * @param targetCell - клетка, на которую ходят
+     */
+    public void move(Cell targetCell){
         Player currentPlayer = getPlayerWhoDoTurn();
 
-        getChildren().remove(oldCell);
+        getChildren().remove(targetCell);
         getChildren().remove(currentPlayer);
 
 
         System.out.print(currentPlayer.getX() + "  " + currentPlayer.getY()+"\n");
-        add(currentPlayer, oldCell.getX(), oldCell.getY());
-        add(oldCell, currentPlayer.getX(), currentPlayer.getY());
+        add(currentPlayer, targetCell.getX(), targetCell.getY());
+        add(targetCell, currentPlayer.getX(), currentPlayer.getY());
 
-        int tmpX = oldCell.getX();
-        int tmpY = oldCell.getY();
+        int tmpX = targetCell.getX();
+        int tmpY = targetCell.getY();
 
-        oldCell.setCoords(currentPlayer);
+        targetCell.setCoords(currentPlayer);
         currentPlayer.setCoords(tmpX, tmpY);
 
-        cells[oldCell.getIndex()] = oldCell;
+        cells[targetCell.getIndex()] = targetCell;
         cells[currentPlayer.getIndex()] = currentPlayer;
 
         switchTurn();
@@ -145,6 +216,8 @@ public class Board extends GridPane {
         checkWin();
     }
 
+
+    /** Проверка статуса всех клеток (Глобальное обновление экрана)*/
     public void checkAllCells(){
         for (Cell cell : cells){
             cell.checkStyle(false);
@@ -170,9 +243,6 @@ public class Board extends GridPane {
         mainClass.getTimer().setText(String.format("%02d:%02d:%02d", minutes, seconds, mlsec));
     }
 
-    public WallBuildMode getBuildMode() {
-        return buildMode;
-    }
 
     public void switchTurn(){
         greenPlayer.setMyTurn(!greenPlayer.isMyTurn());

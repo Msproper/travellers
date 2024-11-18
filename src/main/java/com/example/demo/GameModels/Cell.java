@@ -1,6 +1,6 @@
 package com.example.demo.GameModels;
 
-import com.example.demo.Colors;
+import com.example.demo.Enums.Colors;
 import javafx.scene.control.Label;
 
 
@@ -8,7 +8,7 @@ public abstract class Cell extends Label {
 
     protected int x;
     protected int y;
-    protected Board board;
+    protected Game game;
     private Cell[] neighborhoodCells = new Cell[4];
     private boolean hovered = false;
 
@@ -25,7 +25,7 @@ public abstract class Cell extends Label {
     }
 
     public int getIndex() {
-        return x+y*Board.BOARD_SIZE;
+        return x+y* Game.BOARD_SIZE;
     }
 
     public void setCoords(Cell cell) {
@@ -46,14 +46,14 @@ public abstract class Cell extends Label {
         setStyle("-fx-border-color: purple; -fx-background-color: "+color.getDescription());
     }
 
-    public Cell(int x, int y, Board board){
+    public Cell(int x, int y, Game game){
         super();
         setMinSize(25, 25);
         setPrefSize(75, 75);
         setMaxSize(110, 110);
         this.x = x;
         this.y = y;
-        this.board = board;
+        this.game = game;
 
 
 
@@ -82,7 +82,7 @@ public abstract class Cell extends Label {
     }
 
     public void setCurrentNeighborhood(){
-        currentNeighbor = neighborhoodCells[board.getBuildMode().ordinal()];
+        currentNeighbor = neighborhoodCells[game.getBuildMode().ordinal()];
     }
 
 }

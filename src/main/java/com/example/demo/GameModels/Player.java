@@ -1,7 +1,7 @@
-package com.example.demo;
+package com.example.demo.GameModels;
 
-import com.example.demo.GameModels.Board;
-import com.example.demo.GameModels.Cell;
+import com.example.demo.Enums.Colors;
+import com.example.demo.Utilits.Logic;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,15 +15,15 @@ public class Player extends Cell {
     private final Colors color;
 
 
-    public Player(int x, int y, Board board, Colors color, boolean myTurn, byte winRow) {
-        super(x, y, board);
+    public Player(int x, int y, Game game, Colors color, boolean myTurn, byte winRow) {
+        super(x, y, game);
         this.winRow = winRow;
         applyStyle(color);
         this.color = color;
         this.myTurn = myTurn;
         timer = 6000*3;
 
-        this.numberOfWalls = Board.BOARD_SIZE/2;
+        this.numberOfWalls = Game.BOARD_SIZE/2;
     }
 
     public byte getWinRow() {
@@ -78,7 +78,7 @@ public class Player extends Cell {
     @Override
     public void onMouseExited() {
         if (!myTurn) return;
-        if (!board.isChoiced()) {
+        if (!game.isChoiced()) {
             for (WayCell way : possibleWays){
                 way.applyStyle(Colors.WHITE);
             }
@@ -88,7 +88,7 @@ public class Player extends Cell {
     @Override
     public void OnMouseClicked() {
         if (!myTurn) return;
-        board.setChoiced(!board.isChoiced());
+        game.setChoiced(!game.isChoiced());
         findPossibleWays();
     }
 
@@ -122,7 +122,7 @@ public class Player extends Cell {
     }
 
     public boolean checkLogic(){
-        return Logic.bfs(board.getMatrix(), x, y, winRow);
+        return Logic.bfs(game.getMatrix(), x, y, winRow);
     }
 
 

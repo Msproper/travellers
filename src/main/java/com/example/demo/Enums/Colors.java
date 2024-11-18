@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.demo.Enums;
 
 public enum Colors {
     RED("red;"),

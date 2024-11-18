@@ -1,10 +1,8 @@
-package com.example.demo;
-
-import javafx.util.Pair;
+package com.example.demo.Utilits;
 
 import java.util.*;
 
-class Logic {
+public class Logic {
 
     public static boolean bfs(byte[][] matrix, int playerX, int playerY, byte rowWin) {
 

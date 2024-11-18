@@ -1,8 +1,7 @@
-package com.example.demo;
+package com.example.demo.GameModels;
 
+import com.example.demo.Enums.Colors;
 import com.example.demo.Enums.StatusText;
-import com.example.demo.GameModels.Board;
-import com.example.demo.GameModels.Cell;
 
 public class WayCell extends Cell {
 
@@ -12,19 +11,19 @@ public class WayCell extends Cell {
         return !wall;
     }
 
-    public WayCell(int x, int y, Board board) {
-        super(x, y, board);
+    public WayCell(int x, int y, Game game) {
+        super(x, y, game);
         applyStyle(Colors.WHITE);
     }
 
 
     private boolean isPossibleWay(){
-        return board.getPlayerWhoDoTurn().getPossibleWays().contains(this);
+        return game.getPlayerWhoDoTurn().getPossibleWays().contains(this);
     }
 
     @Override
     public void onMouseEntered() {
-        if (!board.isChoiced()) {
+        if (!game.isChoiced()) {
             checkStyle(true);
             currentNeighbor.checkStyle(true);
         }
@@ -33,7 +32,7 @@ public class WayCell extends Cell {
 
     @Override
     public void onMouseExited() {
-        if (!board.isChoiced()) {
+        if (!game.isChoiced()) {
             checkStyle(false);
             currentNeighbor.checkStyle(false);
         }
@@ -42,38 +41,40 @@ public class WayCell extends Cell {
 
     @Override
     public void OnMouseClicked() {
-        board.checkWin();
+        game.checkWin();
 
-        if (isPossibleWay() && board.isChoiced()) {
-            board.setChoiced(false);
-            board.move(this);
+        if (isPossibleWay() && game.isChoiced()) {
+            game.setChoiced(false);
+            game.move(this);
             return;
         }
 
 
         if (!currentNeighbor.getClass().isAssignableFrom(getClass())
-                || board.isChoiced()
+                || game.isChoiced()
                 || wall
                 || ((WayCell) currentNeighbor).wall
-        ) {board.setStatus(StatusText.WALL_COLLISION, Colors.RED);return;}
+        ) {
+            game.setStatus(StatusText.WALL_COLLISION, Colors.RED);return;}
 
-        if (board.getPlayerWhoDoTurn().getNumberOfWalls() == 0) {board.setStatus(StatusText.DONT_HAVE_WALLS, Colors.RED); return;}
+        if (game.getPlayerWhoDoTurn().getNumberOfWalls() == 0) {
+            game.setStatus(StatusText.DONT_HAVE_WALLS, Colors.RED); return;}
 
-        board.changeMatrix(x, y, (byte)1);
-        board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)1);
+        game.changeMatrix(x, y, (byte)1);
+        game.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)1);
 
-        if ( board.getBluePlayer().checkLogic() && board.getGreenPlayer().checkLogic()){
+        if ( game.getBluePlayer().checkLogic() && game.getGreenPlayer().checkLogic()){
             wall = true;
             ((WayCell) currentNeighbor).wall = true;
-            board.getPlayerWhoDoTurn().useWall();
+            game.getPlayerWhoDoTurn().useWall();
 
-            board.checkPossibleWaysForBoth();
-            board.switchTurn();
+            game.checkPossibleWaysForBoth();
+            game.switchTurn();
         }
         else {
-            board.changeMatrix(x, y, (byte)0);
-            board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)0);
-            board.setStatus(StatusText.NOWAY, Colors.RED);
+            game.changeMatrix(x, y, (byte)0);
+            game.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)0);
+            game.setStatus(StatusText.NOWAY, Colors.RED);
         }
 
     }
