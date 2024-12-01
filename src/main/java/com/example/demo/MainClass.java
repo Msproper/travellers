@@ -1,15 +1,14 @@
 package com.example.demo;
 
+import com.example.demo.Server.NettyClient;
 import com.example.demo.GameModels.Board;
-import com.example.demo.Utilits.Helper;
+import com.example.demo.GameModels.GameModel;
+import com.example.demo.Server.NettyServer;
 import javafx.application.Application;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.util.Optional;
@@ -23,6 +22,12 @@ public class MainClass extends Application {
     private Board board;
     private Label status;
     private Label timer;
+    private GameModel gameModel;
+    //private Runnable socket;
+    private final String HOST = "localhost";
+    private final int PORT = 8080;
+    String name;
+
 
 
 
@@ -33,33 +38,39 @@ public class MainClass extends Application {
     public Label getTimer() {return timer;}
 
     @Override
-    public void start(Stage primaryStage){
+    public void start(Stage primaryStage) throws Exception {
 
 
-//        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-//        alert.setTitle("Режим игры");
-//        alert.setHeaderText(null);
-//        alert.setContentText("Выберите режими игры");
-//
-//        ButtonType choiceHost = new ButtonType("Host");
-//        ButtonType choiceClient = new ButtonType("Cancel");
-//
-//        alert.getButtonTypes().setAll(choiceClient, choiceHost);
-//
-//        Optional<ButtonType> result = alert.showAndWait();
-//        if (result.get() == choiceClient){
-//            // ... user chose "One"
-//        } else if (result.get() == choiceHost) {
-//            // ... user chose "Two"
-//        } else {
-//            return;
-//        }
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Режим игры");
+        alert.setHeaderText(null);
+        alert.setContentText("Выберите режими игры");
 
+        ButtonType choiceHost = new ButtonType("Host");
+        ButtonType choiceClient = new ButtonType("Client");
+
+        alert.getButtonTypes().setAll(choiceClient, choiceHost);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        IOSocket socket;
+        if (result.get() == choiceClient){
+            socket = new NettyClient(HOST, PORT);
+            name = "Clients";
+        } else if (result.get() == choiceHost) {
+            name = "Server";
+            socket = new NettyServer(PORT);
+        } else {
+            return;
+        }
         status = Designer.createStatus();
         timer = Designer.createTimer();
+        gameModel = new GameModel(this, timer);
+        gameModel.setTurn(name.equals("Server"));
+        board = new Board(gameModel);
+        gameModel.setBoard(board);
 
-        board = new Board(this);
 
+        gameModel.setSocket(socket);
 
         BorderPane pane = new BorderPane();
         GridPane options = Designer.createOptions(board);
@@ -83,7 +94,7 @@ public class MainClass extends Application {
             }
         });
 
-        primaryStage.setTitle("Travellers");
+        primaryStage.setTitle(name);
         primaryStage.setScene(scene);
         primaryStage.show();
         primaryStage.setMinWidth(primaryStage.getWidth());

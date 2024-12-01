@@ -2,17 +2,13 @@ package com.example.demo.GameModels;
 
 import com.example.demo.*;
 import com.example.demo.Enums.Colors;
-import com.example.demo.Enums.StatusText;
 import com.example.demo.Enums.WallBuildMode;
-import com.example.demo.Client.NettyClient;
-import com.example.demo.Data.RequestData;
-import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.layout.GridPane;
-import javafx.util.Duration;
+
+import java.util.Optional;
 
 
 /** Это основной класс игровой логики
@@ -32,37 +28,40 @@ public class Board extends GridPane {
     private Player bluePlayer;
     private Player greenPlayer;
     private boolean choiced = false;
-    private final MainClass mainClass;
-    public NettyClient client;
+    private final GameModel gameModel;
     Timeline timer;
 
 
 
-    public Board(MainClass mainClass){
+    public Board(GameModel gameModel){
 
-        this.mainClass = mainClass;
-
+        this.gameModel = gameModel;
         setAlignment(Pos.BOTTOM_CENTER);
         setPadding(new Insets(10));
-        createClient();
-        init();
-
-        setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
-               bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
-
-        startTimer();
-
-
-
+        init(gameModel);
     }
 
-    private void init(){
+    private void init(GameModel gameModel){
         getChildren().removeAll();
 
         setMinSize(BOARD_SIZE*20, BOARD_SIZE*20);
         setMaxSize(BOARD_SIZE*50, BOARD_SIZE*50);
-        bluePlayer = new Player(BOARD_SIZE/2, BOARD_SIZE-1, this, Colors.BLUE, true, (byte)0);
-        greenPlayer = new Player(BOARD_SIZE/2, 0, this, Colors.GREEN, false, (byte)(BOARD_SIZE-1));
+        bluePlayer = new Player(
+                BOARD_SIZE/2,
+                BOARD_SIZE-1,
+                this, Colors.BLUE,
+                true, (byte)0,
+                gameModel
+
+        );
+        greenPlayer = new Player(
+                BOARD_SIZE/2,
+                0,
+                this,
+                Colors.GREEN,
+                false, (byte)(BOARD_SIZE-1),
+                gameModel
+        );
 
         add(greenPlayer, BOARD_SIZE/2, 0);
         add(bluePlayer, BOARD_SIZE/2, BOARD_SIZE-1);
@@ -77,7 +76,7 @@ public class Board extends GridPane {
             int x = getX(i);
             int y = getY(i);
             if (i != FIRST_PLAYER_POS && i != SECOND_PLAYER_POS) {
-                Cell cell = new WayCell(x, y, this);
+                Cell cell = new WayCell(x, y, this, gameModel);
                 add(cell, x, y);
                 cells[i] = cell;
             }
@@ -87,21 +86,15 @@ public class Board extends GridPane {
     }
 
     public void reload(){
-        init();
-
-        startTimer();
+        init(gameModel);
     }
 
-    //Создание экземпляра класса клиента для обращения к серверу
-    public void createClient(){
-        try {
-            client = new NettyClient("localhost", 8080);
-            client.start();
-            client.sendToServer(new RequestData(123,"Test!"));
-        } catch (Exception exception){
-            exception.printStackTrace();
-        }
+
+    public void disableBoard(boolean disabled){
+        setDisable(disabled);
     }
+
+
 
 
     /** Установка статуса
@@ -110,11 +103,7 @@ public class Board extends GridPane {
      * @param color Цвет самого уведомления
      *
      */
-    public void setStatus(StatusText statusText, Colors color){
-        mainClass.getStatus().setText(statusText.getDescription());
-        mainClass.getStatus().setStyle("-fx-text-fill: "+color.getDescription() + "-fx-background-color: #AACC99;");
 
-    }
 
 
     /** Геттеры и сеттеры */
@@ -157,79 +146,33 @@ public class Board extends GridPane {
         matrix[y][x] = value;
     }
 
-
-    /**Проверка возможных ходов для обоих игроков*/
-    public void checkPossibleWaysForBoth(){
-        greenPlayer.findPossibleWays();
-        bluePlayer.findPossibleWays();
-    }
-
-
-    /** Проверка победы / поражения */
-    public void checkWin(){
-        if (bluePlayer.isWin() || greenPlayer.isLose()){
-            DoWin(Colors.BLUE);
-            return;
-        }
-        if (greenPlayer.isWin() || bluePlayer.isLose()){
-            DoWin(Colors.GREEN);
-        }
-
-    }
-
-
-    public void sendMessage(){
-        if (client != null){
-            //todo
-        }
-    }
-
-    /** Объявление победы
-     *
-     * @param color - цвет игрока победителя
-     */
-    public void DoWin(Colors color){
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Победа");
-        alert.setContentText((color == Colors.BLUE ? "Синий" : "Зеленый")+" игрок победил!");
-        alert.showAndWait();
-        timer.stop();
-        setDisable(true);
-    }
-
-    public Player getPlayerWhoDoTurn(){
-        return (greenPlayer.isMyTurn() ? greenPlayer : bluePlayer);
-    }
-
-
     /** Произведение хода игрока
      *
-     * @param targetCell - клетка, на которую ходят
-     */
-    public void move(Cell targetCell){
-        Player currentPlayer = getPlayerWhoDoTurn();
+     * @param x
+     * @param player
+     * @param y
+     * */
+    public void move(int x, int y, Player player){
 
-        getChildren().remove(targetCell);
-        getChildren().remove(currentPlayer);
+        Optional<Cell> OptionalfindedCell = findCell(x,y);
 
+        if (OptionalfindedCell.isEmpty()) return;
+        Cell findedCell = OptionalfindedCell.get();
 
-        System.out.print(currentPlayer.getX() + "  " + currentPlayer.getY()+"\n");
-        add(currentPlayer, targetCell.getX(), targetCell.getY());
-        add(targetCell, currentPlayer.getX(), currentPlayer.getY());
+        getChildren().remove(findedCell);
+        getChildren().remove(player);
 
-        int tmpX = targetCell.getX();
-        int tmpY = targetCell.getY();
+        add(player, x, y);
+        add(findedCell, player.getX(), player.getY());
 
-        targetCell.setCoords(currentPlayer);
-        currentPlayer.setCoords(tmpX, tmpY);
+        findedCell.setCoords(player);
+        player.setCoords(x, y);
 
-        cells[targetCell.getIndex()] = targetCell;
-        cells[currentPlayer.getIndex()] = currentPlayer;
+        cells[findedCell.getIndex()] = findedCell;
+        cells[player.getIndex()] = player;
 
-        switchTurn();
         checkAllCells();
         setNeighborhoodsForCells();
-        checkWin();
     }
 
 
@@ -240,33 +183,11 @@ public class Board extends GridPane {
         }
     }
 
-    private void startTimer(){
-        if (timer != null) timer.stop();
-        timer = new Timeline(
-                new KeyFrame(Duration.millis(10), e -> {getPlayerWhoDoTurn().updateTimer(); setTimer();}));
-        timer.setCycleCount(Timeline.INDEFINITE);
-        timer.play();
-    }
-
-    private void setTimer(){
-        int time = getPlayerWhoDoTurn().getTimer();
-        if (time < 0) {
-            return;
+    private Optional<Cell> findCell(int x, int y){
+        for (Cell cell : cells){
+            if (cell.getX() == x && cell.getY() == y) return Optional.of(cell);
         }
-        int minutes = (time / 6000) ;
-        int seconds = (time / 100)  % 60;
-        int mlsec = time % 100;
-
-        mainClass.getTimer().setText(String.format("%02d:%02d:%02d", minutes, seconds, mlsec));
-    }
-
-
-    public void switchTurn(){
-        greenPlayer.setMyTurn(!greenPlayer.isMyTurn());
-        bluePlayer.setMyTurn(!bluePlayer.isMyTurn());
-        setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
-                bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
-        setTimer();
+        return Optional.empty();
     }
 
     public void switchBuildMode() {

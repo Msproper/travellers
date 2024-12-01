@@ -15,8 +15,8 @@ public class Player extends Cell {
     private final Colors color;
 
 
-    public Player(int x, int y, Board board, Colors color, boolean myTurn, byte winRow) {
-        super(x, y, board);
+    public Player(int x, int y, Board board, Colors color, boolean myTurn, byte winRow, GameModel gameModel) {
+        super(x, y, board, gameModel);
         this.winRow = winRow;
         applyStyle(color);
         this.color = color;

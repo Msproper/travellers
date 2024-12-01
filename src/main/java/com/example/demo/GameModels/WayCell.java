@@ -11,14 +11,14 @@ public class WayCell extends Cell {
         return !wall;
     }
 
-    public WayCell(int x, int y, Board board) {
-        super(x, y, board);
+    public WayCell(int x, int y, Board board, GameModel gameModel) {
+        super(x, y, board, gameModel);
         applyStyle(Colors.WHITE);
     }
 
 
     private boolean isPossibleWay(){
-        return board.getPlayerWhoDoTurn().getPossibleWays().contains(this);
+        return gameModel.getPlayerWhoDoTurn().getPossibleWays().contains(this);
     }
 
     @Override
@@ -41,11 +41,11 @@ public class WayCell extends Cell {
 
     @Override
     public void OnMouseClicked() {
-        board.checkWin();
+        gameModel.checkWin();
 
         if (isPossibleWay() && board.isChoiced()) {
             board.setChoiced(false);
-            board.move(this);
+            gameModel.doMove(x, y);
             return;
         }
 
@@ -55,10 +55,10 @@ public class WayCell extends Cell {
                 || wall
                 || ((WayCell) currentNeighbor).wall
         ) {
-            board.setStatus(StatusText.WALL_COLLISION, Colors.RED);return;}
+            gameModel.setStatus(StatusText.WALL_COLLISION, Colors.RED);return;}
 
-        if (board.getPlayerWhoDoTurn().getNumberOfWalls() == 0) {
-            board.setStatus(StatusText.DONT_HAVE_WALLS, Colors.RED); return;}
+        if (gameModel.getPlayerWhoDoTurn().getNumberOfWalls() == 0) {
+            gameModel.setStatus(StatusText.DONT_HAVE_WALLS, Colors.RED); return;}
 
         board.changeMatrix(x, y, (byte)1);
         board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)1);
@@ -66,15 +66,15 @@ public class WayCell extends Cell {
         if ( board.getBluePlayer().checkLogic() && board.getGreenPlayer().checkLogic()){
             wall = true;
             ((WayCell) currentNeighbor).wall = true;
-            board.getPlayerWhoDoTurn().useWall();
+            gameModel.getPlayerWhoDoTurn().useWall();
 
-            board.checkPossibleWaysForBoth();
-            board.switchTurn();
+            gameModel.checkPossibleWaysForBoth();
+            gameModel.switchTurn();
         }
         else {
             board.changeMatrix(x, y, (byte)0);
             board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)0);
-            board.setStatus(StatusText.NOWAY, Colors.RED);
+            gameModel.setStatus(StatusText.NOWAY, Colors.RED);
         }
 
     }

@@ -6,10 +6,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import javafx.application.Platform;
 
-public class ProcessingHandler extends ChannelInboundHandlerAdapter {
+public class ClientHandler extends ChannelInboundHandlerAdapter {
     GameModel gameModel;
-    ChannelHandlerContext contex;
-    public ProcessingHandler(GameModel gameModel) {
+
+    public ClientHandler(GameModel gameModel) {
         super();
         this.gameModel = gameModel;
     }
@@ -17,18 +17,14 @@ public class ProcessingHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         if (gameModel.isTurn()) gameModel.startBoard();
-        contex = ctx;
+
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        RequestData coords = (RequestData) msg;
+        RequestData coords = (RequestData)msg;
         Platform.runLater(() -> gameModel.doMove(coords.getMoveX(), coords.getMoveY()));
+
+
     }
-
-    public void sendMessage(RequestData requestData){
-        contex.writeAndFlush(requestData);
-    }
-
-
 }

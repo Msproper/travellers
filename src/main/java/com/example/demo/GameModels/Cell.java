@@ -11,6 +11,7 @@ public abstract class Cell extends Label {
     protected Board board;
     private Cell[] neighborhoodCells = new Cell[4];
     private boolean hovered = false;
+    protected final GameModel gameModel;
 
     protected Cell currentNeighbor;
 
@@ -46,11 +47,13 @@ public abstract class Cell extends Label {
         setStyle("-fx-border-color: purple; -fx-background-color: "+color.getDescription());
     }
 
-    public Cell(int x, int y, Board board){
+    public Cell(int x, int y, Board board, GameModel gameModel){
         super();
+
         setMinSize(25, 25);
         setPrefSize(75, 75);
         setMaxSize(110, 110);
+        this.gameModel = gameModel;
         this.x = x;
         this.y = y;
         this.board = board;

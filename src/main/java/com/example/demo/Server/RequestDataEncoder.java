@@ -1,7 +1,6 @@
 package com.example.demo.Server;
 
-import com.example.demo.Data.ResponseData;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.demo.Data.RequestData;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -9,19 +8,18 @@ import io.netty.handler.codec.MessageToByteEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class ResponseDataEncoder
-        extends MessageToByteEncoder<ResponseData> {
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-    ObjectMapper objectMapper = new ObjectMapper();
+public class RequestDataEncoder extends MessageToByteEncoder<RequestData> {
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final Charset charset = StandardCharsets.UTF_8;
 
     @Override
-    protected void encode(ChannelHandlerContext ctx,
-                          ResponseData msg, ByteBuf out) throws Exception {
-
+    protected void encode(ChannelHandlerContext ctx, RequestData msg, ByteBuf out) throws Exception {
         String json = objectMapper.writeValueAsString(msg);
-        System.out.println("I create new response data " + json);
+        System.out.println("Send!");
         out.writeInt(json.length());
         out.writeCharSequence(json, charset);
+
     }
 }

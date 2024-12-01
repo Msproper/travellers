@@ -10,6 +10,8 @@ import javafx.scene.text.Font;
 
 public class Designer {
 
+    Label localStatus;
+
     static void createOptionMenu(){
 
     }

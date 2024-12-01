@@ -1,39 +1,30 @@
 package com.example.demo.Data;
 
 public class RequestData {
-    private int intValue;
-    private String stringValue;
+    private int moveX;
+    private int moveY;
 
     public RequestData() {
     }
 
-    public RequestData(int intValue, String stringValue) {
-        this.intValue = intValue;
-        this.stringValue = stringValue;
+    public RequestData(int moveX, int moveY) {
+        this.moveX = moveX;
+        this.moveY = moveY;
     }
 
-    public int getIntValue() {
-        return intValue;
+    public void setMoveX(int moveX) {
+        this.moveX = moveX;
     }
 
-    public void setIntValue(int intValue) {
-        this.intValue = intValue;
+    public void setMoveY(int moveY) {
+        this.moveY = moveY;
     }
 
-    public String getStringValue() {
-        return stringValue;
+    public int getMoveX() {
+        return moveX;
     }
 
-    public void setStringValue(String stringValue) {
-        this.stringValue = stringValue;
+    public int getMoveY() {
+        return moveY;
     }
-
-    @Override
-    public String toString() {
-        return "RequestData{" +
-                "intValue=" + intValue +
-                ", stringValue='" + stringValue + '\'' +
-                '}';
-    }
-    // standard getters and setters
 }
