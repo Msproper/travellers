@@ -60,23 +60,29 @@ public class WayCell extends Cell {
         if (gameModel.getPlayerWhoDoTurn().getNumberOfWalls() == 0) {
             gameModel.setStatus(StatusText.DONT_HAVE_WALLS, Colors.RED); return;}
 
-        board.changeMatrix(x, y, (byte)1);
-        board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)1);
+        board.changeMatrix(x, y, 1);
+        board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), 1);
 
         if ( board.getBluePlayer().checkLogic() && board.getGreenPlayer().checkLogic()){
-            wall = true;
-            ((WayCell) currentNeighbor).wall = true;
             gameModel.getPlayerWhoDoTurn().useWall();
+            createWall();
+            ((WayCell) currentNeighbor).wall = true;
+            gameModel.doMove(x, y, currentNeighbor.getX(), currentNeighbor.getY());
 
-            gameModel.checkPossibleWaysForBoth();
-            gameModel.switchTurn();
         }
         else {
-            board.changeMatrix(x, y, (byte)0);
-            board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), (byte)0);
+            board.changeMatrix(x, y, 0);
+            board.changeMatrix(currentNeighbor.getX(), currentNeighbor.getY(), 0);
             gameModel.setStatus(StatusText.NOWAY, Colors.RED);
         }
 
+    }
+
+    public void createWall(){
+        wall = true;
+        applyStyle(Colors.BLACK);
+
+        gameModel.checkPossibleWaysForBoth();
     }
 
     @Override

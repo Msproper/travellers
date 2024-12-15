@@ -1,5 +1,7 @@
 package com.example.demo.GameModels;
 
+import com.example.demo.Data.GameDBModel;
+import com.example.demo.Data.PlayerDTO;
 import com.example.demo.Enums.Colors;
 import com.example.demo.Utilits.Logic;
 
@@ -23,7 +25,17 @@ public class Player extends Cell {
         this.myTurn = myTurn;
         timer = 6000*3;
 
-        this.numberOfWalls = Board.BOARD_SIZE/2;
+        this.numberOfWalls = 8;
+    }
+
+    public Player(GameModel gameModel, PlayerDTO playerDTO, Colors color, Board board){
+        super(playerDTO.getX(), playerDTO.getY(), board, gameModel);
+        applyStyle(color);
+        this.myTurn = playerDTO.isMyTurn();
+        this.winRow = playerDTO.getWinRow();
+        this.numberOfWalls = playerDTO.getNumberOfWalls();
+        this.timer = playerDTO.getTimer();
+        this.color = color;
     }
 
     public byte getWinRow() {
@@ -44,7 +56,8 @@ public class Player extends Cell {
 
     public void useWall() {
         numberOfWalls--;
-        System.out.print(numberOfWalls);
+        if (color == Colors.BLUE) gameModel.getWallsOfBlue().setText(String.valueOf(numberOfWalls));
+        else gameModel.getWallsOfGreen().setText(String.valueOf(numberOfWalls));
     }
 
     public boolean isLose(){
@@ -124,6 +137,12 @@ public class Player extends Cell {
     public boolean checkLogic(){
         return Logic.bfs(board.getMatrix(), x, y, winRow);
     }
+
+    public PlayerDTO getPlayerDTOFromPlayer(){
+        return new PlayerDTO(x, y, myTurn, winRow, numberOfWalls, timer);
+    }
+
+
 
 
 }

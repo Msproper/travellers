@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import com.example.demo.Component.Designer;
 import com.example.demo.Server.NettyClient;
 import com.example.demo.GameModels.Board;
 import com.example.demo.GameModels.GameModel;
@@ -22,10 +23,11 @@ public class MainClass extends Application {
     private Board board;
     private Label status;
     private Label timer;
+    private BorderPane pane;
     private GameModel gameModel;
     //private Runnable socket;
     private final String HOST = "localhost";
-    private final int PORT = 8080;
+    private final int PORT = 7777;
     String name;
 
 
@@ -62,9 +64,15 @@ public class MainClass extends Application {
         } else {
             return;
         }
+
+        Label wallsOfBlue = Designer.createStatus();
+        Label wallsOfGreen = Designer.createStatus();
+
+        wallsOfBlue.setText("8");
+        wallsOfGreen.setText("8");
         status = Designer.createStatus();
         timer = Designer.createTimer();
-        gameModel = new GameModel(this, timer);
+        gameModel = new GameModel(this, timer,wallsOfBlue, wallsOfGreen);
         gameModel.setTurn(name.equals("Server"));
         board = new Board(gameModel);
         gameModel.setBoard(board);
@@ -72,11 +80,15 @@ public class MainClass extends Application {
 
         gameModel.setSocket(socket);
 
-        BorderPane pane = new BorderPane();
-        GridPane options = Designer.createOptions(board);
-
+        pane = new BorderPane();
+        GridPane options = Designer.createOptions(gameModel);
 
         BorderPane infoBar = Designer.createInfoBar(status);
+
+
+
+        options.add(wallsOfBlue, 0, 2, 1, 1);
+        options.add(wallsOfGreen, 2, 2, 1, 1);
 
         infoBar.setTop(status);
         infoBar.setCenter(options);
@@ -99,8 +111,15 @@ public class MainClass extends Application {
         primaryStage.show();
         primaryStage.setMinWidth(primaryStage.getWidth());
         primaryStage.setMinHeight(primaryStage.getHeight());
+        primaryStage.setOnCloseRequest(e->gameModel.closeResources());
     }
 
+    public void pauseWindow() {
+        pane.setDisable(true);
+    }
+    public void continueWindow() {
+        pane.setDisable(false);
+    }
 
 
     public static void main(String[] args) {

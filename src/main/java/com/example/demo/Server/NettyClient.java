@@ -67,7 +67,6 @@ public class NettyClient implements IOSocket {
     }
 
     public void sendMessage(RequestData requestData){
-        System.out.println(channel.toString());
         channel.writeAndFlush(requestData);
     }
 

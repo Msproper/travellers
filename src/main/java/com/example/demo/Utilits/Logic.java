@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Logic {
 
-    public static boolean bfs(byte[][] matrix, int playerX, int playerY, byte rowWin) {
+    public static boolean bfs(int[][] matrix, int playerX, int playerY, byte rowWin) {
 
         int rows = matrix.length;
 
@@ -43,7 +43,7 @@ public class Logic {
         return false;
     }
 
-    private static boolean isValid(int row, int col, byte[][] matrix) {
+    private static boolean isValid(int row, int col, int[][] matrix) {
         return row >= 0 && row < matrix.length && col >= 0 && col < matrix[row].length && matrix[row][col] != 1;
     }
 }

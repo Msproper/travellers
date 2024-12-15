@@ -1,34 +1,48 @@
 package com.example.demo.GameModels;
 
+import com.example.demo.Data.GameDBModel;
+import com.example.demo.Data.PlayerDTO;
 import com.example.demo.Data.RequestData;
 import com.example.demo.Enums.Colors;
+import com.example.demo.Enums.DataType;
 import com.example.demo.Enums.StatusText;
+import com.example.demo.HibernateUtil;
 import com.example.demo.IOSocket;
 import com.example.demo.MainClass;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.util.Duration;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Optional;
 
 public class GameModel {
 
-    private boolean start = false;
     public IOSocket socket;
     private final MainClass mainClass;
     private Player bluePlayer;
     private Player greenPlayer;
-    private Label timerLabel;
+    private final Label timerLabel;
     private Timeline timeline;
     private Board board;
+    private final Label wallsOfBlue;
+    private final Label wallsOfGreen;
 
     private boolean turn = false;
 
 
-    public GameModel(MainClass mainClass, Label timerLabel) throws InterruptedException {
+    public GameModel(MainClass mainClass, Label timerLabel, Label wallsOfBlue, Label wallsOfGreen) throws InterruptedException {
         this.mainClass = mainClass;
         this.timerLabel = timerLabel;
-        //startTimer();
+        this.wallsOfBlue = wallsOfBlue;
+        this.wallsOfGreen = wallsOfGreen;
     }
 
     public boolean isTurn() {
@@ -37,10 +51,6 @@ public class GameModel {
 
     public void setTurn(boolean turn) {
         this.turn = turn;
-    }
-
-    public void setStart(boolean start) {
-        this.start = start;
     }
 
     public void setBoard(Board board) {
@@ -53,6 +63,8 @@ public class GameModel {
         this.greenPlayer = greenPlayer;
         setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
                 bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
+        wallsOfBlue.setText(String.valueOf(bluePlayer.getNumberOfWalls()));
+        wallsOfGreen.setText(String.valueOf((greenPlayer.getNumberOfWalls())));
     }
 
     /**Проверка возможных ходов для обоих игроков*/
@@ -64,7 +76,6 @@ public class GameModel {
 
     public void sendMessage(RequestData requestData){
         if (socket != null){
-            System.out.println("Suck");
             socket.sendMessage(requestData);
         }
     }
@@ -115,6 +126,14 @@ public class GameModel {
         timeline.play();
     }
 
+    public Label getWallsOfBlue() {
+        return wallsOfBlue;
+    }
+
+    public Label getWallsOfGreen() {
+        return wallsOfGreen;
+    }
+
     private void setTimer(){
         int time = getPlayerWhoDoTurn().getTimer();
         if (time < 0) {
@@ -124,9 +143,109 @@ public class GameModel {
         int seconds = (time / 100)  % 60;
         int mlsec = time % 100;
 
-        mainClass.getTimer().setText(String.format("%02d:%02d:%02d", minutes, seconds, mlsec));
+        timerLabel.setText(String.format("%02d:%02d:%02d", minutes, seconds, mlsec));
     }
 
+    /** Процесс показа окна подтверждения или отказа от перезапуска игры
+     *
+     * @param turn  обозначает, чей будет ход, если перезапуск одобрен
+     */
+    public void incomingVoteToReload(boolean turn){
+        pauseGame();
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Перезапуск");
+        alert.setHeaderText(null);
+        alert.setContentText("Игрок просит перезапустить игру. Вы согласны?");
+
+        ButtonType choiceYes = new ButtonType("Да");
+        ButtonType choiceNo = new ButtonType("Нет");
+
+        alert.getButtonTypes().setAll(choiceNo, choiceYes);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        RequestData requestData = new RequestData(DataType.RELOAD_GAME, null);
+        if (result.get() == choiceNo){
+            requestData.setInfo("REJECT");
+        } else if (result.get() == choiceYes) {
+            restartGame(turn);
+            requestData.setInfo("APPROVE");
+        } else {
+            return;
+        }
+        sendMessage(requestData);
+        continueGame();
+    }
+
+    public void loadGame(GameDBModel game, boolean turn){
+        continueGame();
+        if (game != null) {
+            board.createGameFromModel(game);
+            setPlayer(board.getBluePlayer(), bluePlayer.board.getGreenPlayer());
+            this.turn = turn;
+            setTimer();
+            if(turn)startBoard();
+            else stopBoard();
+        }
+    }
+
+    public void saveGameInDB(){
+        LocalDateTime now = LocalDateTime.now();
+
+        // Форматирование даты и времени
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedDate = now.format(formatter);
+
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        Transaction transaction = session.beginTransaction();
+
+        GameDBModel gameDBModel = new GameDBModel();
+        gameDBModel.setMyMove(turn);
+        gameDBModel.setMatrix(refactorMatrix(board.getMatrix()));
+        gameDBModel.setBoardSize(MainClass.BOARD_SIZE);
+
+        PlayerDTO bluePlayerDTO = bluePlayer.getPlayerDTOFromPlayer();
+        session.save(bluePlayerDTO);
+
+        PlayerDTO greenPlayerDTO = greenPlayer.getPlayerDTOFromPlayer();
+        session.save(greenPlayerDTO);
+
+        gameDBModel.setBluePlayer(bluePlayerDTO);
+        gameDBModel.setGreenPlayer(greenPlayerDTO);
+        gameDBModel.setName(formattedDate);
+
+        session.save(gameDBModel);
+        transaction.commit();
+        session.close();
+
+    }
+
+    public void restartGame(boolean turn){
+        board.reload();
+        bluePlayer = board.getBluePlayer();
+        greenPlayer = board.getGreenPlayer();
+        this.turn = turn;
+        setStatus(bluePlayer.isMyTurn() ? StatusText.TURN_BLUE : StatusText.TURN_GREEN,
+                bluePlayer.isMyTurn() ? Colors.BLUE : Colors.GREEN );
+        setTimer();
+        if(turn)startBoard();
+        else stopBoard();
+    }
+
+    public void voteToReload(){
+        pauseGame();
+        sendMessage(new RequestData(DataType.RELOAD_GAME, "INVITE"));
+    }
+
+    public void voteToUpload(){
+        pauseGame();
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        GameDBModel game = (GameDBModel) session.createQuery("FROM GameDBModel ORDER BY id DESC")
+                .setMaxResults(1)
+                .uniqueResult();
+        sendMessage(new RequestData(DataType.UPLOAD_GAME, game, "INVITE"));
+        session.close();
+    }
 
     public Player getPlayerWhoDoTurn(){
         return (greenPlayer.isMyTurn() ? greenPlayer : bluePlayer);
@@ -140,17 +259,44 @@ public class GameModel {
         setTimer();
     }
 
+    public void initializeGame(){
+        if (turn) startBoard();
+        startTimer();
+    }
+
+    /** Метод для осуществения хода игрока для перемещения
+     *
+     * @param x Х-координата клетки
+     * @param y Y-координата клетки
+     */
     public void doMove(int x, int y){
         if (turn) {
             turn = false;
             stopBoard();
-            sendMessage(new RequestData(x, y));
+            sendMessage(new RequestData(DataType.PLAYER_MOVE, x, y ));
+        }
+        else {
+            startBoard();
+            //getPlayerWhoDoTurn().useWall();
+            turn = true;
+        }
+        board.move(x, y, getPlayerWhoDoTurn());
+        checkWin();
+        switchTurn();
+    }
+
+    public void doMove(int x1, int y1, int x2, int y2){
+        if (turn) {
+            turn = false;
+            stopBoard();
+            sendMessage(new RequestData(DataType.SET_WALL, x1, y1, x2, y2));
         }
         else {
             startBoard();
             turn = true;
+            board.createWalls(x1, y1, x2, y2);
         }
-        board.move(x, y, getPlayerWhoDoTurn());
+
         checkWin();
         switchTurn();
     }
@@ -163,5 +309,59 @@ public class GameModel {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void continueGame() {
+        mainClass.continueWindow();
+    }
+
+    public void pauseGame(){
+        mainClass.pauseWindow();
+    }
+
+    public void closeResources(){
+        socket.close();
+        HibernateUtil.closeSessionFactory();
+    }
+
+    private int[] refactorMatrix(int[][] matrix){
+        int[] vector = new int[MainClass.BOARD_SIZE*MainClass.BOARD_SIZE];
+        int index = 0;
+        for (int[] innerArray : matrix) {
+            System.out.println(Arrays.toString(innerArray));
+            System.arraycopy(innerArray, 0, vector, index, innerArray.length);
+            index += innerArray.length;
+        }
+        return vector;
+    }
+
+    public void incomingVoteToUpload(GameDBModel gameDBModel){
+        pauseGame();
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Запуск сохраненной игры");
+        alert.setHeaderText(null);
+        alert.setContentText("Игрок предлагает запустить последнее его сохранение. Вы согласны?");
+
+        ButtonType choiceYes = new ButtonType("Да");
+        ButtonType choiceNo = new ButtonType("Нет");
+
+        alert.getButtonTypes().setAll(choiceNo, choiceYes);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        RequestData requestData = new RequestData(DataType.UPLOAD_GAME, null);
+        if (result.get() == choiceNo){
+            requestData.setInfo("REJECT");
+            continueGame();
+        } else if (result.get() == choiceYes) {
+            loadGame(gameDBModel, !gameDBModel.isMyMove());
+            requestData.setInfo("APPROVE");
+            requestData.setGameDBModel(gameDBModel);
+            continueGame();
+        } else {
+            return;
+        }
+        sendMessage(requestData);
+
     }
 }

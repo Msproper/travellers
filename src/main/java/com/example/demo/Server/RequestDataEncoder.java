@@ -17,7 +17,6 @@ public class RequestDataEncoder extends MessageToByteEncoder<RequestData> {
     @Override
     protected void encode(ChannelHandlerContext ctx, RequestData msg, ByteBuf out) throws Exception {
         String json = objectMapper.writeValueAsString(msg);
-        System.out.println("Send!");
         out.writeInt(json.length());
         out.writeCharSequence(json, charset);
 

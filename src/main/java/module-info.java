@@ -22,7 +22,11 @@ module com.example.demo {
     requires io.netty.buffer;
     requires com.fasterxml.jackson.databind;
     requires io.netty.common;
+    requires jakarta.persistence;
+    requires org.hibernate.orm.core;
+    requires java.naming;
 
+    opens com.example.demo.Data;
     opens com.example.demo to javafx.fxml;
     exports com.example.demo;
     exports com.example.demo.GameModels;
@@ -34,5 +38,6 @@ module com.example.demo {
     exports com.example.demo.Server;
     opens com.example.demo.Server to javafx.fxml;
     exports com.example.demo.Data;
-    opens com.example.demo.Data to javafx.fxml;
+    exports com.example.demo.Component;
+    opens com.example.demo.Component to javafx.fxml;
 }

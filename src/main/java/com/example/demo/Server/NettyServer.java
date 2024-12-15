@@ -47,7 +47,7 @@ public class NettyServer implements IOSocket {
         processingHandler.sendMessage(requestData);
     }
 
-    private void stop() {
+    public void close() {
         workerGroup.shutdownGracefully();
         bossGroup.shutdownGracefully();
     }

@@ -1,13 +1,16 @@
 package com.example.demo.GameModels;
 
 import com.example.demo.*;
+import com.example.demo.Data.GameDBModel;
 import com.example.demo.Enums.Colors;
 import com.example.demo.Enums.WallBuildMode;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.layout.GridPane;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 
@@ -20,10 +23,10 @@ import java.util.Optional;
  */
 
 public class Board extends GridPane {
-
+    private boolean disable = false;
     private WallBuildMode buildMode = WallBuildMode.LEFT;
     public final static int BOARD_SIZE = MainClass.BOARD_SIZE;
-    private byte[][] matrix = new byte[BOARD_SIZE][BOARD_SIZE];
+    private int[][] matrix = new int[BOARD_SIZE][BOARD_SIZE];
     private final Cell[] cells = new Cell[BOARD_SIZE*BOARD_SIZE];
     private Player bluePlayer;
     private Player greenPlayer;
@@ -34,7 +37,6 @@ public class Board extends GridPane {
 
 
     public Board(GameModel gameModel){
-
         this.gameModel = gameModel;
         setAlignment(Pos.BOTTOM_CENTER);
         setPadding(new Insets(10));
@@ -42,7 +44,7 @@ public class Board extends GridPane {
     }
 
     private void init(GameModel gameModel){
-        getChildren().removeAll();
+        getChildren().removeAll(getChildren());
 
         setMinSize(BOARD_SIZE*20, BOARD_SIZE*20);
         setMaxSize(BOARD_SIZE*50, BOARD_SIZE*50);
@@ -86,24 +88,16 @@ public class Board extends GridPane {
     }
 
     public void reload(){
+        setDisable(false);
         init(gameModel);
+        setDisable(disable);
     }
 
 
-    public void disableBoard(boolean disabled){
-        setDisable(disabled);
+    public void disableBoard(boolean disable){
+        setDisable(disable);
+        this.disable = disable;
     }
-
-
-
-
-    /** Установка статуса
-     *
-     * @param statusText Сам текст из перечисления StatusText
-     * @param color Цвет самого уведомления
-     *
-     */
-
 
 
     /** Геттеры и сеттеры */
@@ -123,7 +117,7 @@ public class Board extends GridPane {
         this.choiced = choiced;
     }
 
-    public byte[][] getMatrix() {
+    public int[][] getMatrix() {
         return matrix;
     }
 
@@ -131,8 +125,55 @@ public class Board extends GridPane {
         return buildMode;
     }
 
-    /**Конец геттеров и сеттеров*/
+    public void createGameFromModel(GameDBModel gameDBModel){
+        getChildren().removeAll(getChildren());
 
+        setMinSize(BOARD_SIZE*20, BOARD_SIZE*20);
+        setMaxSize(BOARD_SIZE*50, BOARD_SIZE*50);
+        bluePlayer = new Player(
+                gameModel,
+                gameDBModel.getBluePlayer(),
+                Colors.BLUE,
+                this
+        );
+        greenPlayer = new Player(
+                gameModel,
+                gameDBModel.getGreenPlayer(),
+                Colors.GREEN,
+                this
+        );
+        var modelMatrix = gameDBModel.getMatrix();
+
+        add(greenPlayer, greenPlayer.getX(), greenPlayer.getY());
+        add(bluePlayer, bluePlayer.getX(), bluePlayer.getY());
+
+        int FIRST_PLAYER_POS = greenPlayer.getX()+greenPlayer.getY()*BOARD_SIZE;
+        cells[FIRST_PLAYER_POS] = greenPlayer;
+        int SECOND_PLAYER_POS = bluePlayer.getX()+bluePlayer.getY()*BOARD_SIZE;
+        cells[SECOND_PLAYER_POS] = bluePlayer;
+
+
+        for (int i= 0; i<BOARD_SIZE*BOARD_SIZE; i++){
+
+            int x = getX(i);
+            int y = getY(i);
+            if (i != FIRST_PLAYER_POS && i != SECOND_PLAYER_POS) {
+                WayCell cell = new WayCell(x, y, this, gameModel);
+                add(cell, x, y);
+                cells[i] = cell;
+                if (modelMatrix[i] == 1){
+                    cell.createWall();
+                }
+            }
+        }
+        setMatrix(modelMatrix);
+        setNeighborhoodsForCells();
+
+    }
+
+    private void printMatrix() {
+        for (var el: matrix) System.out.println(Arrays.toString(el));
+    }
 
 
     /** Изменение матрицы
@@ -142,7 +183,7 @@ public class Board extends GridPane {
      * @param value - Значение, на которое меняем
      */
 
-    public void changeMatrix(int x, int y, byte value){
+    public void changeMatrix(int x, int y, int value){
         matrix[y][x] = value;
     }
 
@@ -153,7 +194,6 @@ public class Board extends GridPane {
      * @param y
      * */
     public void move(int x, int y, Player player){
-
         Optional<Cell> OptionalfindedCell = findCell(x,y);
 
         if (OptionalfindedCell.isEmpty()) return;
@@ -231,7 +271,18 @@ public class Board extends GridPane {
 
     }
 
+    public void setMatrix(int[] matrix) {
 
+        // Переменная для отслеживания индекса в одномерном массиве
+        int index = 0;
+
+        // Заполняем двумерную матрицу значениями из одномерного массива
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                this.matrix[i][j] = matrix[index++];
+            }
+        }
+    }
 
     private int getX(int i){
         return i % BOARD_SIZE;
@@ -239,6 +290,22 @@ public class Board extends GridPane {
 
     private int getY(int i){
         return (i-getX(i))/BOARD_SIZE;
+    }
+
+    public void createWalls(int x1, int y1, int x2, int y2) {
+        changeMatrix(x1, y1, 1);
+        changeMatrix(x2,y2, 1);
+        gameModel.getPlayerWhoDoTurn().useWall();
+
+        Optional<Cell> OptionalfindedCell = findCell(x1,y1);
+        if (OptionalfindedCell.isEmpty()) return;
+        ((WayCell) OptionalfindedCell.get()).createWall();
+
+        OptionalfindedCell = findCell(x2,y2);
+        if (OptionalfindedCell.isEmpty()) return;
+        ((WayCell) OptionalfindedCell.get()).createWall();
+
+        checkAllCells();
     }
 
 }

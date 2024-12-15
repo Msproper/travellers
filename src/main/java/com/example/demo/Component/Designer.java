@@ -1,6 +1,7 @@
-package com.example.demo;
+package com.example.demo.Component;
 
-import com.example.demo.GameModels.Board;
+import com.example.demo.GameModels.GameModel;
+import com.example.demo.OptionButton;
 import com.example.demo.Utilits.Helper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -52,24 +53,29 @@ public class Designer {
         return new Background(backgroundImage);
     }
 
-    static public GridPane createOptions(Board board){
+    static public GridPane createOptions(GameModel gameModel){
         GridPane options = new GridPane();
         options.setAlignment(Pos.CENTER);
 
         options.add(new OptionButton(
                         "reset.png",
-                        e -> {
-                            board.reload();
-                        },
+                        _ -> gameModel.voteToReload(),
                         "Reset"),
-                0, 0, 2, 2
+                0, 0, 1, 1
         );
         options.add(new OptionButton(
                         "save.png",
-                        e -> {
+                        _ -> {gameModel.saveGameInDB();
                         },
                         "Save"),
-                2, 0, 2, 2
+                1, 0, 1, 1
+        );
+
+        options.add(new OptionButton(
+                        "load.png",
+                        _ -> gameModel.voteToUpload(),
+                        "Save"),
+                2, 0, 1, 1
         );
 
         return options;

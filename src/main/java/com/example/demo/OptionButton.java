@@ -8,11 +8,11 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 
-class OptionButton extends Label {
+public class OptionButton extends Label {
 
     private ImageView icon;
 
-    OptionButton(String imageResource, EventHandler<? super MouseEvent> mouseClickedEvent, String tooltip) {
+    public OptionButton(String imageResource, EventHandler<? super MouseEvent> mouseClickedEvent, String tooltip) {
         setAlignment(Pos.CENTER);
         icon = new ImageView(Helper.loadImage(imageResource, 70, 70));
         resizeIcon(50);
